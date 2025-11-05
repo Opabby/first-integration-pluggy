@@ -16,6 +16,7 @@
     "axios": "^1.13.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
+    "pluggy-js": "^0.19.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-pluggy-connect": "^2.10.2"

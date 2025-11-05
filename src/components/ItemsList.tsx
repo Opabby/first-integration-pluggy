@@ -10,8 +10,8 @@ import {
   Stack,
   Spinner,
 } from '@chakra-ui/react';
-import { pluggyApi } from '../services/api';
-import type { Item } from '../types/pluggy';
+import { pluggyApi } from '../services/pluggyApi';  // ✅ Changed from connectTokenApi
+import type { Item } from 'pluggy-js';  // ✅ Also changed - use pluggy-js types
 
 interface ItemsListProps {
   onItemSelect?: (item: Item) => void;
@@ -46,7 +46,15 @@ export const ItemsList = ({ onItemSelect, refreshTrigger }: ItemsListProps) => {
       setError(null);
 
       try {
-        const data = await pluggyApi.getItems();
+        // First, get stored item IDs from localStorage
+        const storedItems = JSON.parse(localStorage.getItem('pluggy_items') || '[]');
+        
+        // Then fetch each item's data
+        const itemPromises = storedItems.map((stored: { itemId: string }) => 
+          pluggyApi.getItem(stored.itemId)
+        );
+        
+        const data = await Promise.all(itemPromises);
         setItems(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load items');
@@ -58,6 +66,8 @@ export const ItemsList = ({ onItemSelect, refreshTrigger }: ItemsListProps) => {
     fetchItems();
   }, [refreshTrigger]);
 
+  // ... rest of the component stays the same
+  
   if (isLoading) {
     return (
       <Flex justify="center" align="center" minH="200px">

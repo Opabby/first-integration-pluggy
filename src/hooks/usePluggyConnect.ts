@@ -1,6 +1,17 @@
 import { useState, useCallback } from 'react';
-import { pluggyApi } from '../services/api';
-import type { ConnectToken, PluggySuccessData, PluggyErrorData } from '../types/pluggy';
+import { getConnectToken } from '../services/connectTokenApi';  // ✅ Changed
+import type { Item } from 'pluggy-js';
+
+interface PluggySuccessData {
+  item: Item;
+}
+
+interface PluggyErrorData {
+  message: string;
+  data?: {
+    item?: Item;
+  };
+}
 
 export const usePluggyConnect = (userId?: string) => {
   const [connectToken, setConnectToken] = useState<string>('');
@@ -12,8 +23,7 @@ export const usePluggyConnect = (userId?: string) => {
     setError(null);
     
     try {
-      // Call your Vercel backend to get a Connect Token
-      const data: ConnectToken = await pluggyApi.getConnectToken();
+      const data = await getConnectToken();  // ✅ Use getConnectToken directly
       setConnectToken(data.accessToken);
       return data.accessToken;
     } catch (err) {
@@ -29,8 +39,11 @@ export const usePluggyConnect = (userId?: string) => {
     console.log('Connection successful!', data.item);
     
     try {
-      // Store item in localStorage (or send to your backend if you have endpoints)
-      await pluggyApi.storeItem(data.item.id, userId);
+      // Store item in localStorage
+      const items = JSON.parse(localStorage.getItem('pluggy_items') || '[]');
+      items.push({ itemId: data.item.id, userId, createdAt: new Date().toISOString() });
+      localStorage.setItem('pluggy_items', JSON.stringify(items));
+      
       return data.item;
     } catch (err) {
       console.error('Failed to store item:', err);
