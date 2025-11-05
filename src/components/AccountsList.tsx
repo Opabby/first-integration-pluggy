@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -8,23 +8,26 @@ import {
   Stack,
   Spinner,
   Button,
-} from '@chakra-ui/react';
-import { pluggyApi } from '../services/api';
-import type { Account } from '../types/pluggy';
+} from "@chakra-ui/react";
+import { pluggyApi } from "../services/pluggyApi";
+import type { Account } from "pluggy-js";
 
 interface AccountsListProps {
   itemId: string;
   onAccountSelect?: (account: Account) => void;
 }
 
-const formatCurrency = (amount: number, currency: string = 'BRL') => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
+const formatCurrency = (amount: number, currency: string = "BRL") => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
     currency,
   }).format(amount);
 };
 
-export const AccountsList = ({ itemId, onAccountSelect }: AccountsListProps) => {
+export const AccountsList = ({
+  itemId,
+  onAccountSelect,
+}: AccountsListProps) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +41,9 @@ export const AccountsList = ({ itemId, onAccountSelect }: AccountsListProps) => 
         const data = await pluggyApi.getAccounts(itemId);
         setAccounts(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load accounts');
+        setError(
+          err instanceof Error ? err.message : "Failed to load accounts"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -83,11 +88,13 @@ export const AccountsList = ({ itemId, onAccountSelect }: AccountsListProps) => 
                 <Text fontWeight="bold" fontSize="lg">
                   {account.name}
                 </Text>
-                <Badge colorScheme={account.type === 'CREDIT' ? 'purple' : 'blue'}>
-                  {account.subtype.replace('_', ' ')}
+                <Badge
+                  colorScheme={account.type === "CREDIT" ? "purple" : "blue"}
+                >
+                  {account.subtype.replace("_", " ")}
                 </Badge>
               </Flex>
-              
+
               <Text fontSize="sm" color="gray.600">
                 Account: {account.number}
               </Text>
@@ -97,10 +104,14 @@ export const AccountsList = ({ itemId, onAccountSelect }: AccountsListProps) => 
               <Text fontSize="2xl" fontWeight="bold" color="brand.600">
                 {formatCurrency(account.balance, account.currencyCode)}
               </Text>
-              
+
               {account.creditData && (
                 <Text fontSize="sm" color="gray.600">
-                  Limit: {formatCurrency(account.creditData.creditLimit, account.currencyCode)}
+                  Limit:{" "}
+                  {formatCurrency(
+                    account.creditData.creditLimit ?? 0,
+                    account.currencyCode
+                  )}
                 </Text>
               )}
             </Box>
