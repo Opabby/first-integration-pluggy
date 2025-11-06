@@ -10,15 +10,15 @@ import {
   Stack,
   Spinner,
 } from '@chakra-ui/react';
-import { pluggyApi } from '../services/pluggyApi';  // ✅ Changed from connectTokenApi
-import type { Item } from 'pluggy-js';  // ✅ Also changed - use pluggy-js types
+import { pluggyApi, type PluggyItemRecord } from '../services/pluggyApi';
 
 interface ItemsListProps {
-  onItemSelect?: (item: Item) => void;
+  onItemSelect?: (item: PluggyItemRecord) => void;
   refreshTrigger?: number;
+  userId?: string;
 }
 
-const getStatusColor = (status: Item['status']) => {
+const getStatusColor = (status?: string) => {
   switch (status) {
     case 'UPDATED':
       return 'green';
@@ -30,13 +30,15 @@ const getStatusColor = (status: Item['status']) => {
       return 'orange';
     case 'WAITING_USER_INPUT':
       return 'yellow';
+    case 'CREATED':
+      return 'cyan';
     default:
       return 'gray';
   }
 };
 
-export const ItemsList = ({ onItemSelect, refreshTrigger }: ItemsListProps) => {
-  const [items, setItems] = useState<Item[]>([]);
+export const ItemsList = ({ onItemSelect, refreshTrigger, userId }: ItemsListProps) => {
+  const [items, setItems] = useState<PluggyItemRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,15 +48,8 @@ export const ItemsList = ({ onItemSelect, refreshTrigger }: ItemsListProps) => {
       setError(null);
 
       try {
-        // First, get stored item IDs from localStorage
-        const storedItems = JSON.parse(localStorage.getItem('pluggy_items') || '[]');
-        
-        // Then fetch each item's data
-        const itemPromises = storedItems.map((stored: { itemId: string }) => 
-          pluggyApi.getItem(stored.itemId)
-        );
-        
-        const data = await Promise.all(itemPromises);
+        // Fetch items from backend API (which queries Supabase)
+        const data = await pluggyApi.getItems(userId);
         setItems(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load items');
@@ -64,32 +59,37 @@ export const ItemsList = ({ onItemSelect, refreshTrigger }: ItemsListProps) => {
     };
 
     fetchItems();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, userId]);
 
-  // ... rest of the component stays the same
-  
   if (isLoading) {
     return (
       <Flex justify="center" align="center" minH="200px">
-        <Spinner size="xl" color="brand.500" />
+        <Spinner size="xl" colorPalette="blue" />
       </Flex>
     );
   }
 
   if (error) {
     return (
-      <Card.Root p={4}>
-        <Text color="red.500">{error}</Text>
+      <Card.Root>
+        <Card.Body>
+          <Text color="red.500">{error}</Text>
+          <Button mt={4} onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </Card.Body>
       </Card.Root>
     );
   }
 
   if (items.length === 0) {
     return (
-      <Card.Root p={8}>
-        <Text textAlign="center" color="gray.500">
-          No connected accounts yet. Click "Connect Bank Account" to get started.
-        </Text>
+      <Card.Root>
+        <Card.Body p={8}>
+          <Text textAlign="center" color="gray.500">
+            No connected accounts yet. Click "Connect Bank Account" to get started.
+          </Text>
+        </Card.Body>
       </Card.Root>
     );
   }
@@ -97,42 +97,51 @@ export const ItemsList = ({ onItemSelect, refreshTrigger }: ItemsListProps) => {
   return (
     <Stack gap={4}>
       {items.map((item) => (
-        <Card.Root key={item.id} p={4} _hover={{ shadow: 'md' }} cursor="pointer">
-          <Flex gap={4} align="center">
-            <Image
-              src={item.connector.imageUrl}
-              alt={item.connector.name}
-              boxSize="48px"
-              borderRadius="md"
-            />
-            
-            <Box flex={1}>
-              <Flex justify="space-between" align="start">
-                <Box>
-                  <Text fontWeight="bold" fontSize="lg">
-                    {item.connector.name}
+        <Card.Root
+          key={item.id}
+          cursor="pointer"
+          onClick={() => onItemSelect?.(item)}
+          _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
+          transition="all 0.2s"
+        >
+          <Card.Body>
+            <Flex align="center" gap={4}>
+              {item.connector_image_url && (
+                <Image
+                  src={item.connector_image_url}
+                  alt={item.connector_name || 'Bank'}
+                  boxSize="48px"
+                  borderRadius="md"
+                  objectFit="contain"
+                />
+              )}
+              
+              <Box flex={1}>
+                <Flex justify="space-between" align="center" mb={2}>
+                  <Text fontSize="lg" fontWeight="semibold">
+                    {item.connector_name || 'Unknown Bank'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
-                    ID: {item.id}
-                  </Text>
-                </Box>
+                  <Badge colorPalette={getStatusColor(item.status)}>
+                    {item.status || 'UNKNOWN'}
+                  </Badge>
+                </Flex>
                 
-                <Badge colorScheme={getStatusColor(item.status)}>
-                  {item.status}
-                </Badge>
-              </Flex>
+                <Text fontSize="sm" color="gray.600">
+                  Connected: {new Date(item.created_at || '').toLocaleDateString()}
+                </Text>
+                
+                {item.last_updated_at && (
+                  <Text fontSize="sm" color="gray.500">
+                    Last updated: {new Date(item.last_updated_at).toLocaleDateString()}
+                  </Text>
+                )}
+              </Box>
 
-              <Flex gap={2} mt={2}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onItemSelect?.(item)}
-                >
-                  View Details
-                </Button>
-              </Flex>
-            </Box>
-          </Flex>
+              <Button variant="ghost" colorPalette="blue">
+                View Accounts →
+              </Button>
+            </Flex>
+          </Card.Body>
         </Card.Root>
       ))}
     </Stack>

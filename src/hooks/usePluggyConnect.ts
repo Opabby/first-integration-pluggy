@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { getConnectToken } from '../services/connectTokenApi';  // ✅ Changed
+import { getConnectToken } from '../services/connectTokenApi';
+import { pluggyApi, type PluggyItemRecord } from '../services/pluggyApi';
 import type { Item } from 'pluggy-js';
 
 interface PluggySuccessData {
@@ -23,7 +24,7 @@ export const usePluggyConnect = (userId?: string) => {
     setError(null);
     
     try {
-      const data = await getConnectToken();  // ✅ Use getConnectToken directly
+      const data = await getConnectToken();
       setConnectToken(data.accessToken);
       return data.accessToken;
     } catch (err) {
@@ -39,14 +40,25 @@ export const usePluggyConnect = (userId?: string) => {
     console.log('Connection successful!', data.item);
     
     try {
-      // Store item in localStorage
-      const items = JSON.parse(localStorage.getItem('pluggy_items') || '[]');
-      items.push({ itemId: data.item.id, userId, createdAt: new Date().toISOString() });
-      localStorage.setItem('pluggy_items', JSON.stringify(items));
+      const itemData: PluggyItemRecord = {
+        item_id: data.item.id,
+        user_id: userId,
+        connector_id: data.item.connector.id.toString(),
+        connector_name: data.item.connector.name,
+        connector_image_url: data.item.connector.imageUrl,
+        status: data.item.status,
+        created_at: data.item.createdAt.toISOString(),
+        updated_at: (data.item.updatedAt || data.item.createdAt).toISOString(),
+        last_updated_at: data.item.lastUpdatedAt?.toISOString(),
+      };
+
+      // Save to Supabase via backend API
+      const savedItem = await pluggyApi.saveItem(itemData);
+      console.log('Item saved via backend:', savedItem);
       
       return data.item;
     } catch (err) {
-      console.error('Failed to store item:', err);
+      console.error('Failed to save item via backend:', err);
       throw err;
     }
   }, [userId]);
