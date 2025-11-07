@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Item, Account, Transaction } from 'pluggy-js';
+import type { AccountRecord } from '../types/pluggy';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -37,6 +38,13 @@ export const pluggyApi = {
       params: { itemId },
     });
     return response.data.results || response.data;
+  },
+
+  getAccountsFromDb: async (itemId: string): Promise<AccountRecord[]> => {
+    const response = await backendApi.get('/api/accounts/get', {
+      params: { itemId },
+    });
+    return response.data;
   },
 
   getTransactions: async (
