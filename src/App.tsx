@@ -11,15 +11,16 @@ import {
 import { ConnectButton } from './components/ConnectButton';
 import { ItemsList } from './components/ItemsList';
 import { AccountsList } from './components/AccountsList';
-import type { Item, Account } from './types/pluggy';
+import type { AccountRecord } from './types/pluggy';
+import type { PluggyItemRecord } from './services/pluggyApi';
 
 function App() {
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PluggyItemRecord | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<AccountRecord | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleSuccess = (item: Item) => {
-    console.log('New item connected:', item);
+  const handleSuccess = () => {
+    console.log('New item connected');
     // Trigger refresh of items list
     setRefreshTrigger((prev) => prev + 1);
   };
@@ -67,14 +68,14 @@ function App() {
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
-                  {selectedItem.connector.name} - Accounts
+                  {selectedItem.connector_name} - Accounts
                 </Heading>
                 <Button onClick={() => setSelectedItem(null)} variant="ghost">
                   Back to Items
                 </Button>
               </Flex>
               <AccountsList
-                itemId={selectedItem.id}
+                itemId={selectedItem.item_id}
                 onAccountSelect={setSelectedAccount}
               />
             </Box>
