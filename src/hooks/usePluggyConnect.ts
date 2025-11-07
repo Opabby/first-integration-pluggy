@@ -52,9 +52,8 @@ export const usePluggyConnect = (userId?: string) => {
         last_updated_at: data.item.lastUpdatedAt?.toISOString(),
       };
 
-      // Save to Supabase via backend API
-      const savedItem = await pluggyApi.saveItem(itemData);
-      console.log('Item saved via backend:', savedItem);
+      const response = await pluggyApi.saveItem(itemData);
+      console.log('Item and accounts saved via backend:', response);
       
       return data.item;
     } catch (err) {
