@@ -7,10 +7,12 @@ import {
   Stack,
   Flex,
   Button,
+  Tabs,
 } from '@chakra-ui/react';
 import { ConnectButton } from './components/ConnectButton';
 import { ItemsList } from './components/ItemsList';
 import { AccountsList } from './components/AccountsList';
+import { IdentityDisplay } from './components/IdentityDisplay';
 import type { AccountRecord } from './types/pluggy';
 import type { PluggyItemRecord } from './services/pluggyApi';
 
@@ -21,20 +23,17 @@ function App() {
 
   const handleSuccess = () => {
     console.log('New item connected');
-    // Trigger refresh of items list
     setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleError = (message: string) => {
     console.error('Connection error:', message);
-    // You could show a toast notification here
   };
 
   return (
     <Box minH="100vh" bg="gray.50" py={8}>
       <Container maxW="container.xl">
         <Stack gap={8}>
-          {/* Header */}
           <Flex justify="space-between" align="center">
             <Box>
               <Heading size="2xl" mb={2}>
@@ -51,7 +50,6 @@ function App() {
             />
           </Flex>
 
-          {/* Main Content */}
           {!selectedItem && !selectedAccount && (
             <Box>
               <Heading size="lg" mb={4}>
@@ -68,16 +66,30 @@ function App() {
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
-                  {selectedItem.connector_name} - Accounts
+                  {selectedItem.connector_name}
                 </Heading>
                 <Button onClick={() => setSelectedItem(null)} variant="ghost">
                   Back to Items
                 </Button>
               </Flex>
-              <AccountsList
-                itemId={selectedItem.item_id}
-                onAccountSelect={setSelectedAccount}
-              />
+
+              <Tabs.Root defaultValue="accounts">
+                <Tabs.List>
+                  <Tabs.Trigger value="accounts">Accounts</Tabs.Trigger>
+                  <Tabs.Trigger value="identity">Identity</Tabs.Trigger>
+                </Tabs.List>
+
+                <Tabs.Content value="accounts" pt={4}>
+                  <AccountsList
+                    itemId={selectedItem.item_id}
+                    onAccountSelect={setSelectedAccount}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content value="identity" pt={4}>
+                  <IdentityDisplay itemId={selectedItem.item_id} />
+                </Tabs.Content>
+              </Tabs.Root>
             </Box>
           )}
 

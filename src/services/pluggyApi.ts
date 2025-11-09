@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import type { Item, Account, Transaction } from 'pluggy-js';
-import type { AccountRecord } from '../types/pluggy';
+import type { AccountRecord, IdentityRecord } from '../types/pluggy';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -45,6 +45,20 @@ export const pluggyApi = {
       params: { itemId },
     });
     return response.data;
+  },
+
+  getIdentityFromDb: async (itemId: string): Promise<IdentityRecord | null> => {
+    try {
+      const response = await backendApi.get('/api/identity/get', {
+        params: { itemId },
+      });
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   getTransactions: async (
