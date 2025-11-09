@@ -13,7 +13,6 @@ const backendApi = axios.create({
 });
 
 export interface PluggyItemRecord {
-  id?: number;
   item_id: string;
   user_id?: string;
   connector_id?: string;

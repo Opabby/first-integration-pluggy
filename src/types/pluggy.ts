@@ -57,9 +57,8 @@ export interface DisaggregatedCreditLimits {
 }
 
 export interface AccountRecord {
-  id?: string;
-  item_id: string;
   account_id: string;
+  item_id: string;
   type: 'BANK' | 'CREDIT' | 'PAYMENT_ACCOUNT';
   subtype?: string;
   number?: string;
@@ -107,9 +106,8 @@ export interface Relation {
 }
 
 export interface IdentityRecord {
-  id?: string;
-  item_id: string;
   identity_id: string;
+  item_id: string;
   full_name?: string;
   company_name?: string;
   document?: string;
