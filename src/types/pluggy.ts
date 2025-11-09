@@ -125,3 +125,10 @@ export interface IdentityRecord {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface DeleteItemResponse {
+  success: boolean;
+  message: string;
+  itemId: string;
+  warnings?: string[];
+}
