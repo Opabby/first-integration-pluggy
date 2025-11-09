@@ -1,149 +1,154 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Card,
   Text,
   Flex,
-  Image,
   Badge,
-  Button,
   Stack,
   Spinner,
-} from '@chakra-ui/react';
-import { pluggyApi, type PluggyItemRecord } from '../services/pluggyApi';
+  Heading,
+  Button,
+} from "@chakra-ui/react";
+import { pluggyApi, PluggyItemRecord } from "../services/pluggyApi";
+import { DeleteItemButton } from "./DeleteItemButton";
 
 interface ItemsListProps {
-  onItemSelect?: (item: PluggyItemRecord) => void;
-  refreshTrigger?: number;
   userId?: string;
+  onItemSelect?: (item: PluggyItemRecord) => void;
 }
 
-const getStatusColor = (status?: string) => {
-  switch (status) {
-    case 'UPDATED':
-      return 'green';
-    case 'UPDATING':
-      return 'blue';
-    case 'LOGIN_ERROR':
-      return 'red';
-    case 'OUTDATED':
-      return 'orange';
-    case 'WAITING_USER_INPUT':
-      return 'yellow';
-    case 'CREATED':
-      return 'cyan';
-    default:
-      return 'gray';
-  }
-};
-
-export const ItemsList = ({ onItemSelect, refreshTrigger, userId }: ItemsListProps) => {
+export const ItemsList = ({ userId, onItemSelect }: ItemsListProps) => {
   const [items, setItems] = useState<PluggyItemRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchItems = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await pluggyApi.getItems(userId);
+      setItems(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load items"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
   useEffect(() => {
-    const fetchItems = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Fetch items from backend API (which queries Supabase)
-        const data = await pluggyApi.getItems(userId);
-        setItems(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load items');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchItems();
-  }, [refreshTrigger, userId]);
+  }, [fetchItems]);
+
+  const handleDeleteSuccess = () => {
+    fetchItems();
+  };
 
   if (isLoading) {
     return (
       <Flex justify="center" align="center" minH="200px">
-        <Spinner size="xl" colorPalette="blue" />
+        <Spinner size="xl" color="brand.500" />
       </Flex>
     );
   }
 
   if (error) {
     return (
-      <Card.Root>
-        <Card.Body>
-          <Text color="red.500">{error}</Text>
-          <Button mt={4} onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </Card.Body>
+      <Card.Root p={4}>
+        <Text color="red.500">{error}</Text>
+        <Button mt={2} onClick={fetchItems} size="sm">
+          Retry
+        </Button>
       </Card.Root>
     );
   }
 
   if (items.length === 0) {
     return (
-      <Card.Root>
-        <Card.Body p={8}>
-          <Text textAlign="center" color="gray.500">
-            No connected accounts yet. Click "Connect Bank Account" to get started.
-          </Text>
-        </Card.Body>
+      <Card.Root p={8}>
+        <Text textAlign="center" color="gray.500">
+          No items connected yet. Connect your first account to get started!
+        </Text>
       </Card.Root>
     );
   }
 
   return (
-    <Stack gap={4}>
-      {items.map((item) => (
-        <Card.Root
-          key={item.item_id}
-          cursor="pointer"
-          onClick={() => onItemSelect?.(item)}
-          _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
-          transition="all 0.2s"
-        >
-          <Card.Body>
-            <Flex align="center" gap={4}>
-              {item.connector_image_url && (
-                <Image
-                  src={item.connector_image_url}
-                  alt={item.connector_name || 'Bank'}
-                  boxSize="48px"
-                  borderRadius="md"
-                  objectFit="contain"
-                />
-              )}
-              
-              <Box flex={1}>
-                <Flex justify="space-between" align="center" mb={2}>
-                  <Text fontSize="lg" fontWeight="semibold">
-                    {item.connector_name || 'Unknown Bank'}
-                  </Text>
-                  <Badge colorPalette={getStatusColor(item.status)}>
-                    {item.status || 'UNKNOWN'}
-                  </Badge>
-                </Flex>
-                
-                <Text fontSize="sm" color="gray.600">
-                  Connected: {new Date(item.created_at || '').toLocaleDateString()}
-                </Text>
-                
-                {item.last_updated_at && (
-                  <Text fontSize="sm" color="gray.500">
-                    Last updated: {new Date(item.last_updated_at).toLocaleDateString()}
-                  </Text>
+    <Box>
+      <Heading size="lg" mb={4}>
+        Connected Items ({items.length})
+      </Heading>
+      
+      <Stack gap={3}>
+        {items.map((item) => (
+          <Card.Root key={item.item_id} p={4}>
+            <Flex justify="space-between" align="center">
+              <Flex align="center" gap={3} flex={1}>
+                {item.connector_image_url && (
+                  <img
+                    src={item.connector_image_url}
+                    alt={item.connector_name || "Connector"}
+                    style={{ width: "40px", height: "40px", borderRadius: "8px" }}
+                  />
                 )}
-              </Box>
+                
+                <Box flex={1}>
+                  <Text fontWeight="semibold" fontSize="lg">
+                    {item.connector_name || "Unknown Connector"}
+                  </Text>
+                  
+                  <Flex gap={2} align="center" mt={1}>
+                    {item.status && (
+                      <Badge
+                        colorScheme={
+                          item.status === "UPDATED"
+                            ? "green"
+                            : item.status === "UPDATING"
+                            ? "blue"
+                            : item.status === "LOGIN_ERROR"
+                            ? "red"
+                            : "gray"
+                        }
+                        size="sm"
+                      >
+                        {item.status}
+                      </Badge>
+                    )}
+                    
+                    {item.last_updated_at && (
+                      <Text fontSize="xs" color="gray.500">
+                        Updated: {new Date(item.last_updated_at).toLocaleDateString()}
+                      </Text>
+                    )}
+                  </Flex>
+                </Box>
+              </Flex>
 
-              <Button variant="ghost" colorPalette="blue">
-                View Accounts →
-              </Button>
+              <Flex gap={2}>
+                {onItemSelect && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onItemSelect(item)}
+                  >
+                    View Details
+                  </Button>
+                )}
+                
+                <DeleteItemButton
+                  itemId={item.item_id}
+                  itemName={item.connector_name}
+                  onDeleteSuccess={handleDeleteSuccess}
+                  size="sm"
+                />
+              </Flex>
             </Flex>
-          </Card.Body>
-        </Card.Root>
-      ))}
-    </Stack>
+          </Card.Root>
+        ))}
+      </Stack>
+    </Box>
   );
 };
