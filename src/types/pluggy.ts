@@ -57,9 +57,8 @@ export interface DisaggregatedCreditLimits {
 }
 
 export interface AccountRecord {
-  id?: string;
-  item_id: string;
   account_id: string;
+  item_id: string;
   type: 'BANK' | 'CREDIT' | 'PAYMENT_ACCOUNT';
   subtype?: string;
   number?: string;
@@ -72,6 +71,57 @@ export interface AccountRecord {
   bank_data?: BankData | null;
   credit_data?: CreditData | null;
   disaggregated_credit_limits?: DisaggregatedCreditLimits | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Address {
+  fullAddress?: string;
+  primaryAddress?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  country?: string;
+  type?: string;
+  [key: string]: unknown;
+}
+
+export interface PhoneNumber {
+  type?: string;
+  value?: string;
+  [key: string]: unknown;
+}
+
+export interface Email {
+  type?: string;
+  value?: string;
+  [key: string]: unknown;
+}
+
+export interface Relation {
+  type?: string;
+  name?: string;
+  document?: string;
+  [key: string]: unknown;
+}
+
+export interface IdentityRecord {
+  identity_id: string;
+  item_id: string;
+  full_name?: string;
+  company_name?: string;
+  document?: string;
+  document_type?: string;
+  tax_number?: string;
+  job_title?: string;
+  birth_date?: string;
+  investor_profile?: string;
+  establishment_code?: string;
+  establishment_name?: string;
+  addresses?: Address[] | null;
+  phone_numbers?: PhoneNumber[] | null;
+  emails?: Email[] | null;
+  relations?: Relation[] | null;
   created_at?: string;
   updated_at?: string;
 }

@@ -98,7 +98,7 @@ export const ItemsList = ({ onItemSelect, refreshTrigger, userId }: ItemsListPro
     <Stack gap={4}>
       {items.map((item) => (
         <Card.Root
-          key={item.id}
+          key={item.item_id}
           cursor="pointer"
           onClick={() => onItemSelect?.(item)}
           _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
