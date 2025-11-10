@@ -193,3 +193,29 @@ export interface InvestmentTransactionRecord {
   updated_at?: string;
   [key: string]: unknown;
 }
+
+export interface LoanRecord {
+  loan_id: string;
+  item_id: string;
+  product_name: string;
+  type?: string;
+  subtype?: string;
+  contract_number?: string;
+  balance?: number;
+  currency_code?: string;
+  principal_debt?: number;
+  outstanding_balance?: number;
+  interest_rate?: number;
+  due_date?: string;
+  minimum_payment?: number;
+  owner?: string;
+  contracted_amount?: number;
+  current_debt_amount?: number;
+  installments_to_pay?: string;
+  installment_frequency?: string;
+  cet?: number;
+  date?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
