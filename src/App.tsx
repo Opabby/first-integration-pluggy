@@ -16,14 +16,17 @@ import { IdentityDisplay } from './components/IdentityDisplay';
 import { TransactionsList } from './components/TransactionsList';
 import { InvestmentsList } from './components/InvestmentsList';
 import { InvestmentTransactionsList } from './components/InvestmentTransactionsList';
+import { LoansList } from './components/LoansList';
+import { LoanDetails } from './components/LoanDetails';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import type { AccountRecord, InvestmentRecord } from './types/pluggy';
+import type { AccountRecord, InvestmentRecord, LoanRecord } from './types/pluggy';
 import type { PluggyItemRecord } from './services/pluggyApi';
 
 function App() {
   const [selectedItem, setSelectedItem] = useState<PluggyItemRecord | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<AccountRecord | null>(null);
   const [selectedInvestment, setSelectedInvestment] = useState<InvestmentRecord | null>(null);
+  const [selectedLoan, setSelectedLoan] = useState<LoanRecord | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleSuccess = () => {
@@ -42,6 +45,7 @@ function App() {
         setSelectedItem(item);
         setSelectedAccount(null); // Reset account when selecting new item
         setSelectedInvestment(null); // Reset investment when selecting new item
+        setSelectedLoan(null); // Reset loan when selecting new item
       } else {
         console.error('Invalid item selected:', item);
       }
@@ -70,7 +74,7 @@ function App() {
             />
           </Flex>
 
-          {!selectedItem && !selectedAccount && !selectedInvestment && (
+          {!selectedItem && !selectedAccount && !selectedInvestment && !selectedLoan && (
             <Box>
               <Heading size="lg" mb={4}>
                 Connected Accounts
@@ -82,7 +86,7 @@ function App() {
             </Box>
           )}
 
-          {selectedItem && !selectedAccount && !selectedInvestment && (
+          {selectedItem && !selectedAccount && !selectedInvestment && !selectedLoan && (
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
@@ -92,6 +96,7 @@ function App() {
                   setSelectedItem(null);
                   setSelectedAccount(null);
                   setSelectedInvestment(null);
+                  setSelectedLoan(null);
                 }} variant="ghost">
                   Back to Items
                 </Button>
@@ -103,6 +108,7 @@ function App() {
                     <Tabs.List>
                       <Tabs.Trigger value="accounts">Accounts</Tabs.Trigger>
                       <Tabs.Trigger value="investments">Investments</Tabs.Trigger>
+                      <Tabs.Trigger value="loans">Loans</Tabs.Trigger>
                       <Tabs.Trigger value="identity">Identity</Tabs.Trigger>
                     </Tabs.List>
 
@@ -155,6 +161,35 @@ function App() {
                               }
                             } catch (error) {
                               console.error('Error selecting investment:', error);
+                            }
+                          }}
+                        />
+                      </ErrorBoundary>
+                    </Tabs.Content>
+
+                    <Tabs.Content value="loans" pt={4}>
+                      <ErrorBoundary>
+                        <LoansList
+                          itemId={selectedItem.item_id}
+                          onLoanSelect={(loan) => {
+                            try {
+                              console.log('Loan selected:', loan);
+                              // Normalize loan: use loan_id if available, otherwise use id
+                              const normalizedLoan = {
+                                ...loan,
+                                loan_id: loan.loan_id || (loan as any).id
+                              };
+                              console.log('Normalized loan:', normalizedLoan);
+                              console.log('Loan ID:', normalizedLoan.loan_id);
+                              if (normalizedLoan && normalizedLoan.loan_id) {
+                                setSelectedLoan(normalizedLoan as LoanRecord);
+                                setSelectedAccount(null); // Clear account when selecting loan
+                                setSelectedInvestment(null); // Clear investment when selecting loan
+                              } else {
+                                console.error('Invalid loan selected - missing loan_id:', loan);
+                              }
+                            } catch (error) {
+                              console.error('Error selecting loan:', error);
                             }
                           }}
                         />
@@ -229,6 +264,34 @@ function App() {
                   <Text color="red.500" fontWeight="bold">Error: Investment ID is missing</Text>
                   <Text color="red.400" fontSize="sm" mt={2}>
                     Selected investment: {JSON.stringify(selectedInvestment, null, 2)}
+                  </Text>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {selectedLoan && (
+            <Box>
+              <Flex justify="space-between" align="center" mb={4}>
+                <Heading size="lg">
+                  {selectedLoan.product_name || 'Loan'} - Details
+                </Heading>
+                <Button onClick={() => {
+                  console.log('Going back to loans');
+                  setSelectedLoan(null);
+                }} variant="ghost">
+                  Back to Loans
+                </Button>
+              </Flex>
+              {selectedLoan.loan_id ? (
+                <ErrorBoundary>
+                  <LoanDetails loan={selectedLoan} />
+                </ErrorBoundary>
+              ) : (
+                <Box p={4} bg="red.50" borderRadius="md">
+                  <Text color="red.500" fontWeight="bold">Error: Loan ID is missing</Text>
+                  <Text color="red.400" fontSize="sm" mt={2}>
+                    Selected loan: {JSON.stringify(selectedLoan, null, 2)}
                   </Text>
                 </Box>
               )}

@@ -6,7 +6,8 @@ import type {
   DeleteItemResponse,
   TransactionRecord,
   InvestmentRecord,
-  InvestmentTransactionRecord
+  InvestmentTransactionRecord,
+  LoanRecord
 } from "../types/pluggy";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -147,6 +148,20 @@ export const pluggyApi = {
   saveInvestments: async (investments: InvestmentRecord[]): Promise<InvestmentRecord[]> => {
     const response = await backendApi.post("/api/investments", {
       investments,
+    });
+    return response.data;
+  },
+
+  getLoansFromDb: async (itemId: string): Promise<LoanRecord[]> => {
+    const response = await backendApi.get("/api/loans", {
+      params: { itemId, fromDb: 'true' },
+    });
+    return response.data;
+  },
+
+  saveLoans: async (loans: LoanRecord[]): Promise<LoanRecord[]> => {
+    const response = await backendApi.post("/api/loans", {
+      loans,
     });
     return response.data;
   },
