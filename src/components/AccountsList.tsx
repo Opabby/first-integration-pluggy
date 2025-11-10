@@ -59,28 +59,40 @@ export const AccountsList = ({
         const data = await pluggyApi.getAccountsFromDb(itemId);
         console.log('Accounts API response:', data, 'Type:', typeof data, 'Is Array:', Array.isArray(data));
         
+        let accountsArray: AccountRecord[] = [];
+        
         // Ensure data is always an array
         if (Array.isArray(data)) {
-          setAccounts(data);
+          accountsArray = data;
         } else if (data && Array.isArray(data.accounts)) {
           // Handle case where API returns { accounts: [...] }
-          setAccounts(data.accounts);
+          accountsArray = data.accounts;
         } else if (data && Array.isArray(data.results)) {
           // Handle case where API returns { results: [...] }
-          setAccounts(data.results);
+          accountsArray = data.results;
         } else if (data && typeof data === 'object' && data !== null) {
-          // Handle case where API returns a single account object or wrapped response
-          // Check if it's a single account with account_id
-          if (data.account_id) {
-            setAccounts([data]);
-          } else {
-            console.warn('Unexpected accounts data format:', data);
-            setAccounts([]);
-          }
+          // Handle case where API returns a single account object
+          accountsArray = [data];
         } else {
           console.warn('Unexpected accounts data format:', data);
           setAccounts([]);
+          return;
         }
+        
+        // Normalize account data: map 'id' to 'account_id' if needed
+        const normalizedAccounts = accountsArray.map((account: any) => {
+          // If account has 'id' but not 'account_id', create account_id from id
+          if (account.id && !account.account_id) {
+            return {
+              ...account,
+              account_id: account.id
+            };
+          }
+          return account;
+        });
+        
+        console.log('Normalized accounts:', normalizedAccounts);
+        setAccounts(normalizedAccounts);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load accounts"

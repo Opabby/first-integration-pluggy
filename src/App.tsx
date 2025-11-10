@@ -106,7 +106,19 @@ function App() {
                           itemId={selectedItem.item_id}
                           onAccountSelect={(account) => {
                             try {
-                              setSelectedAccount(account);
+                              console.log('Account selected:', account);
+                              // Normalize account: use account_id if available, otherwise use id
+                              const normalizedAccount = {
+                                ...account,
+                                account_id: account.account_id || (account as any).id
+                              };
+                              console.log('Normalized account:', normalizedAccount);
+                              console.log('Account ID:', normalizedAccount.account_id);
+                              if (normalizedAccount && normalizedAccount.account_id) {
+                                setSelectedAccount(normalizedAccount as AccountRecord);
+                              } else {
+                                console.error('Invalid account selected - missing account_id:', account);
+                              }
                             } catch (error) {
                               console.error('Error selecting account:', error);
                             }
@@ -133,17 +145,31 @@ function App() {
             </Box>
           )}
 
-          {selectedAccount && selectedAccount.account_id && (
+          {selectedAccount && (
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
                   {selectedAccount.name || 'Account'} - Transactions
                 </Heading>
-                <Button onClick={() => setSelectedAccount(null)} variant="ghost">
+                <Button onClick={() => {
+                  console.log('Going back to accounts');
+                  setSelectedAccount(null);
+                }} variant="ghost">
                   Back to Accounts
                 </Button>
               </Flex>
-              <TransactionsList accountId={selectedAccount.account_id} />
+              {selectedAccount.account_id ? (
+                <ErrorBoundary>
+                  <TransactionsList accountId={selectedAccount.account_id} />
+                </ErrorBoundary>
+              ) : (
+                <Box p={4} bg="red.50" borderRadius="md">
+                  <Text color="red.500" fontWeight="bold">Error: Account ID is missing</Text>
+                  <Text color="red.400" fontSize="sm" mt={2}>
+                    Selected account: {JSON.stringify(selectedAccount, null, 2)}
+                  </Text>
+                </Box>
+              )}
             </Box>
           )}
         </Stack>

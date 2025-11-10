@@ -102,9 +102,12 @@ export const pluggyApi = {
     limit?: number,
     offset?: number
   ): Promise<TransactionRecord[]> => {
+    console.log('pluggyApi.getTransactionsFromDb called with:', { accountId, limit, offset });
     const response = await backendApi.get("/api/transactions", {
       params: { accountId, fromDb: 'true', limit, offset },
     });
+    console.log('getTransactionsFromDb response:', response);
+    console.log('getTransactionsFromDb response.data:', response.data);
     return response.data;
   },
 

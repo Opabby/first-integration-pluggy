@@ -38,30 +38,70 @@ export const TransactionsList = ({ accountId }: TransactionsListProps) => {
   const [limit] = useState(100);
   const [offset, setOffset] = useState(0);
 
+  console.log('🔵 TransactionsList component rendered with accountId:', accountId, typeof accountId);
+
   useEffect(() => {
+    console.log('🟢 TransactionsList useEffect triggered, accountId:', accountId, 'limit:', limit, 'offset:', offset);
+    
+    if (!accountId) {
+      console.warn('⚠️ No accountId provided, skipping fetch');
+      setIsLoading(false);
+      setTransactions([]);
+      return;
+    }
+    
     const fetchTransactions = async () => {
+      console.log('🟡 fetchTransactions called for accountId:', accountId);
       setIsLoading(true);
       setError(null);
 
       try {
+        console.log('🔴 Making API call to getTransactionsFromDb with:', { accountId, limit, offset });
         const data = await pluggyApi.getTransactionsFromDb(
           accountId,
           limit,
           offset
         );
-        setTransactions(data);
+        console.log('✅ Transactions API response:', data, 'Type:', typeof data, 'Is Array:', Array.isArray(data));
+        
+        // Ensure data is always an array
+        if (Array.isArray(data)) {
+          console.log('✅ Setting transactions array with', data.length, 'items');
+          setTransactions(data);
+        } else if (data && Array.isArray(data.transactions)) {
+          // Handle case where API returns { transactions: [...] }
+          console.log('✅ Setting transactions from data.transactions with', data.transactions.length, 'items');
+          setTransactions(data.transactions);
+        } else if (data && Array.isArray(data.results)) {
+          // Handle case where API returns { results: [...] }
+          console.log('✅ Setting transactions from data.results with', data.results.length, 'items');
+          setTransactions(data.results);
+        } else if (data && typeof data === 'object' && data !== null) {
+          // Handle case where API returns a single transaction object
+          if (data.transaction_id) {
+            console.log('✅ Setting single transaction');
+            setTransactions([data]);
+          } else {
+            console.warn('⚠️ Unexpected transactions data format - object without transaction_id:', data);
+            setTransactions([]);
+          }
+        } else {
+          console.warn('⚠️ Unexpected transactions data format:', data);
+          setTransactions([]);
+        }
       } catch (err) {
+        console.error('❌ Error fetching transactions:', err);
         setError(
           err instanceof Error ? err.message : "Failed to load transactions"
         );
+        setTransactions([]); // Reset to empty array on error
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (accountId) {
-      fetchTransactions();
-    }
+    // Always call fetchTransactions if accountId exists
+    fetchTransactions();
   }, [accountId, limit, offset]);
 
   const loadMore = () => {
@@ -84,6 +124,17 @@ export const TransactionsList = ({ accountId }: TransactionsListProps) => {
     return (
       <Card.Root p={4}>
         <Text color="red.500">{error}</Text>
+      </Card.Root>
+    );
+  }
+
+  // Ensure transactions is always an array before rendering
+  if (!Array.isArray(transactions)) {
+    return (
+      <Card.Root p={4}>
+        <Text color="red.500">
+          Error: Invalid transactions data format. Expected an array.
+        </Text>
       </Card.Root>
     );
   }
