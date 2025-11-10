@@ -157,3 +157,39 @@ export interface TransactionRecord {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface InvestmentRecord {
+  investment_id: string;
+  item_id: string;
+  name: string;
+  type?: string;
+  subtype?: string;
+  number?: string;
+  balance?: number;
+  currency_code?: string;
+  code?: string;
+  value?: number;
+  quantity?: number;
+  amount?: number;
+  tax_type?: string;
+  owner?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+export interface InvestmentTransactionRecord {
+  transaction_id: string;
+  investment_id: string;
+  date: string;
+  description?: string;
+  type?: string;
+  quantity?: number;
+  value?: number;
+  amount?: number;
+  currency_code?: string;
+  fees?: number;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
