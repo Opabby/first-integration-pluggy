@@ -13,6 +13,8 @@ import { ConnectButton } from './components/ConnectButton';
 import { ItemsList } from './components/ItemsList';
 import { AccountsList } from './components/AccountsList';
 import { IdentityDisplay } from './components/IdentityDisplay';
+import { TransactionsList } from './components/TransactionsList';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import type { AccountRecord } from './types/pluggy';
 import type { PluggyItemRecord } from './services/pluggyApi';
 
@@ -28,6 +30,20 @@ function App() {
 
   const handleError = (message: string) => {
     console.error('Connection error:', message);
+  };
+
+  const handleItemSelect = (item: PluggyItemRecord) => {
+    console.log('Selecting item:', item);
+    try {
+      if (item && item.item_id) {
+        setSelectedItem(item);
+        setSelectedAccount(null); // Reset account when selecting new item
+      } else {
+        console.error('Invalid item selected:', item);
+      }
+    } catch (error) {
+      console.error('Error in handleItemSelect:', error);
+    }
   };
 
   return (
@@ -56,7 +72,7 @@ function App() {
                 Connected Accounts
               </Heading>
               <ItemsList
-                onItemSelect={setSelectedItem}
+                onItemSelect={handleItemSelect}
                 refreshTrigger={refreshTrigger}
               />
             </Box>
@@ -66,30 +82,66 @@ function App() {
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
-                  {selectedItem.connector_name}
+                  {selectedItem.connector_name || 'Item Details'}
                 </Heading>
-                <Button onClick={() => setSelectedItem(null)} variant="ghost">
+                <Button onClick={() => {
+                  setSelectedItem(null);
+                  setSelectedAccount(null);
+                }} variant="ghost">
                   Back to Items
                 </Button>
               </Flex>
 
-              <Tabs.Root defaultValue="accounts">
-                <Tabs.List>
-                  <Tabs.Trigger value="accounts">Accounts</Tabs.Trigger>
-                  <Tabs.Trigger value="identity">Identity</Tabs.Trigger>
-                </Tabs.List>
+              {selectedItem.item_id ? (
+                <ErrorBoundary>
+                  <Tabs.Root defaultValue="accounts">
+                    <Tabs.List>
+                      <Tabs.Trigger value="accounts">Accounts</Tabs.Trigger>
+                      <Tabs.Trigger value="identity">Identity</Tabs.Trigger>
+                    </Tabs.List>
 
-                <Tabs.Content value="accounts" pt={4}>
-                  <AccountsList
-                    itemId={selectedItem.item_id}
-                    onAccountSelect={setSelectedAccount}
-                  />
-                </Tabs.Content>
+                    <Tabs.Content value="accounts" pt={4}>
+                      <ErrorBoundary>
+                        <AccountsList
+                          itemId={selectedItem.item_id}
+                          onAccountSelect={(account) => {
+                            try {
+                              console.log('Account selected:', account);
+                              // Normalize account: use account_id if available, otherwise use id
+                              const normalizedAccount = {
+                                ...account,
+                                account_id: account.account_id || (account as any).id
+                              };
+                              console.log('Normalized account:', normalizedAccount);
+                              console.log('Account ID:', normalizedAccount.account_id);
+                              if (normalizedAccount && normalizedAccount.account_id) {
+                                setSelectedAccount(normalizedAccount as AccountRecord);
+                              } else {
+                                console.error('Invalid account selected - missing account_id:', account);
+                              }
+                            } catch (error) {
+                              console.error('Error selecting account:', error);
+                            }
+                          }}
+                        />
+                      </ErrorBoundary>
+                    </Tabs.Content>
 
-                <Tabs.Content value="identity" pt={4}>
-                  <IdentityDisplay itemId={selectedItem.item_id} />
-                </Tabs.Content>
-              </Tabs.Root>
+                    <Tabs.Content value="identity" pt={4}>
+                      <ErrorBoundary>
+                        <IdentityDisplay itemId={selectedItem.item_id} />
+                      </ErrorBoundary>
+                    </Tabs.Content>
+                  </Tabs.Root>
+                </ErrorBoundary>
+              ) : (
+                <Box p={4} bg="red.50" borderRadius="md">
+                  <Text color="red.500" fontWeight="bold">Error: Item ID is missing</Text>
+                  <Text color="red.400" fontSize="sm" mt={2}>
+                    Selected item: {JSON.stringify(selectedItem, null, 2)}
+                  </Text>
+                </Box>
+              )}
             </Box>
           )}
 
@@ -97,15 +149,27 @@ function App() {
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
-                  {selectedAccount.name} - Transactions
+                  {selectedAccount.name || 'Account'} - Transactions
                 </Heading>
-                <Button onClick={() => setSelectedAccount(null)} variant="ghost">
+                <Button onClick={() => {
+                  console.log('Going back to accounts');
+                  setSelectedAccount(null);
+                }} variant="ghost">
                   Back to Accounts
                 </Button>
               </Flex>
-              <Text color="gray.600">
-                Transactions component coming next...
-              </Text>
+              {selectedAccount.account_id ? (
+                <ErrorBoundary>
+                  <TransactionsList accountId={selectedAccount.account_id} />
+                </ErrorBoundary>
+              ) : (
+                <Box p={4} bg="red.50" borderRadius="md">
+                  <Text color="red.500" fontWeight="bold">Error: Account ID is missing</Text>
+                  <Text color="red.400" fontSize="sm" mt={2}>
+                    Selected account: {JSON.stringify(selectedAccount, null, 2)}
+                  </Text>
+                </Box>
+              )}
             </Box>
           )}
         </Stack>

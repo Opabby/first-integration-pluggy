@@ -4,6 +4,7 @@ import type {
   AccountRecord,
   IdentityRecord,
   DeleteItemResponse,
+  TransactionRecord
 } from "../types/pluggy";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -64,17 +65,6 @@ export const pluggyApi = {
     }
   },
 
-  getTransactions: async (
-    accountId: string,
-    from?: string,
-    to?: string
-  ): Promise<Transaction[]> => {
-    const response = await backendApi.get("/api/transactions", {
-      params: { accountId, from, to },
-    });
-    return response.data.results || response.data;
-  },
-
   saveItem: async (itemData: PluggyItemRecord): Promise<PluggyItemRecord> => {
     const response = await backendApi.post("/api/items", itemData);
     return response.data;
@@ -92,5 +82,45 @@ export const pluggyApi = {
       params: { itemId },
     });
     return response.data;
+  },
+
+  getTransactions: async (
+    accountId: string,
+    from?: string,
+    to?: string,
+    page?: number,
+    pageSize?: number
+  ): Promise<Transaction[]> => {
+    const response = await backendApi.get("/api/transactions", {
+      params: { accountId, from, to, page, pageSize },
+    });
+    return response.data.results || response.data;
+  },
+
+  getTransactionsFromDb: async (
+    accountId: string,
+    limit?: number,
+    offset?: number
+  ): Promise<TransactionRecord[]> => {
+    console.log('pluggyApi.getTransactionsFromDb called with:', { accountId, limit, offset });
+    const response = await backendApi.get("/api/transactions", {
+      params: { accountId, fromDb: 'true', limit, offset },
+    });
+    console.log('getTransactionsFromDb response:', response);
+    console.log('getTransactionsFromDb response.data:', response.data);
+    return response.data;
+  },
+
+  saveTransactions: async (transactions: TransactionRecord[]): Promise<TransactionRecord[]> => {
+    const response = await backendApi.post("/api/transactions", {
+      transactions,
+    });
+    return response.data;
+  },
+
+  deleteTransaction: async (transactionId: string): Promise<void> => {
+    await backendApi.delete("/api/transactions", {
+      params: { transactionId },
+    });
   },
 };

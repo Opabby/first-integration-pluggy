@@ -57,11 +57,47 @@ export const AccountsList = ({
 
       try {
         const data = await pluggyApi.getAccountsFromDb(itemId);
-        setAccounts(data);
+        console.log('Accounts API response:', data, 'Type:', typeof data, 'Is Array:', Array.isArray(data));
+        
+        let accountsArray: AccountRecord[] = [];
+        
+        // Ensure data is always an array
+        if (Array.isArray(data)) {
+          accountsArray = data;
+        } else if (data && Array.isArray(data.accounts)) {
+          // Handle case where API returns { accounts: [...] }
+          accountsArray = data.accounts;
+        } else if (data && Array.isArray(data.results)) {
+          // Handle case where API returns { results: [...] }
+          accountsArray = data.results;
+        } else if (data && typeof data === 'object' && data !== null) {
+          // Handle case where API returns a single account object
+          accountsArray = [data];
+        } else {
+          console.warn('Unexpected accounts data format:', data);
+          setAccounts([]);
+          return;
+        }
+        
+        // Normalize account data: map 'id' to 'account_id' if needed
+        const normalizedAccounts = accountsArray.map((account: any) => {
+          // If account has 'id' but not 'account_id', create account_id from id
+          if (account.id && !account.account_id) {
+            return {
+              ...account,
+              account_id: account.id
+            };
+          }
+          return account;
+        });
+        
+        console.log('Normalized accounts:', normalizedAccounts);
+        setAccounts(normalizedAccounts);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load accounts"
         );
+        setAccounts([]); // Reset to empty array on error
       } finally {
         setIsLoading(false);
       }
@@ -84,6 +120,17 @@ export const AccountsList = ({
     return (
       <Card.Root p={4}>
         <Text color="red.500">{error}</Text>
+      </Card.Root>
+    );
+  }
+
+  // Ensure accounts is always an array before rendering
+  if (!Array.isArray(accounts)) {
+    return (
+      <Card.Root p={4}>
+        <Text color="red.500">
+          Error: Invalid accounts data format. Expected an array.
+        </Text>
       </Card.Root>
     );
   }

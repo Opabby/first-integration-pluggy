@@ -132,3 +132,28 @@ export interface DeleteItemResponse {
   itemId: string;
   warnings?: string[];
 }
+
+export interface TransactionRecord {
+  account_id: string;
+  transaction_id: string;
+  date: string;
+  description: string;
+  description_raw?: string;
+  amount: number;
+  amount_in_account_currency?: number;
+  balance?: number;
+  currency_code?: string;
+  category?: string;
+  category_id?: string;
+  provider_code?: string;
+  provider_id?: string;
+  status?: 'POSTED' | 'PENDING';
+  type: 'CREDIT' | 'DEBIT';
+  operation_type?: string;
+  operation_category?: string;
+  payment_data?: Record<string, unknown> | null;
+  credit_card_metadata?: Record<string, unknown> | null;
+  merchant?: Record<string, unknown> | null;
+  created_at?: string;
+  updated_at?: string;
+}
