@@ -14,13 +14,16 @@ import { ItemsList } from './components/ItemsList';
 import { AccountsList } from './components/AccountsList';
 import { IdentityDisplay } from './components/IdentityDisplay';
 import { TransactionsList } from './components/TransactionsList';
+import { InvestmentsList } from './components/InvestmentsList';
+import { InvestmentTransactionsList } from './components/InvestmentTransactionsList';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import type { AccountRecord } from './types/pluggy';
+import type { AccountRecord, InvestmentRecord } from './types/pluggy';
 import type { PluggyItemRecord } from './services/pluggyApi';
 
 function App() {
   const [selectedItem, setSelectedItem] = useState<PluggyItemRecord | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<AccountRecord | null>(null);
+  const [selectedInvestment, setSelectedInvestment] = useState<InvestmentRecord | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleSuccess = () => {
@@ -38,6 +41,7 @@ function App() {
       if (item && item.item_id) {
         setSelectedItem(item);
         setSelectedAccount(null); // Reset account when selecting new item
+        setSelectedInvestment(null); // Reset investment when selecting new item
       } else {
         console.error('Invalid item selected:', item);
       }
@@ -66,7 +70,7 @@ function App() {
             />
           </Flex>
 
-          {!selectedItem && !selectedAccount && (
+          {!selectedItem && !selectedAccount && !selectedInvestment && (
             <Box>
               <Heading size="lg" mb={4}>
                 Connected Accounts
@@ -78,7 +82,7 @@ function App() {
             </Box>
           )}
 
-          {selectedItem && !selectedAccount && (
+          {selectedItem && !selectedAccount && !selectedInvestment && (
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
@@ -87,6 +91,7 @@ function App() {
                 <Button onClick={() => {
                   setSelectedItem(null);
                   setSelectedAccount(null);
+                  setSelectedInvestment(null);
                 }} variant="ghost">
                   Back to Items
                 </Button>
@@ -97,6 +102,7 @@ function App() {
                   <Tabs.Root defaultValue="accounts">
                     <Tabs.List>
                       <Tabs.Trigger value="accounts">Accounts</Tabs.Trigger>
+                      <Tabs.Trigger value="investments">Investments</Tabs.Trigger>
                       <Tabs.Trigger value="identity">Identity</Tabs.Trigger>
                     </Tabs.List>
 
@@ -121,6 +127,34 @@ function App() {
                               }
                             } catch (error) {
                               console.error('Error selecting account:', error);
+                            }
+                          }}
+                        />
+                      </ErrorBoundary>
+                    </Tabs.Content>
+
+                    <Tabs.Content value="investments" pt={4}>
+                      <ErrorBoundary>
+                        <InvestmentsList
+                          itemId={selectedItem.item_id}
+                          onInvestmentSelect={(investment) => {
+                            try {
+                              console.log('Investment selected:', investment);
+                              // Normalize investment: use investment_id if available, otherwise use id
+                              const normalizedInvestment = {
+                                ...investment,
+                                investment_id: investment.investment_id || (investment as any).id
+                              };
+                              console.log('Normalized investment:', normalizedInvestment);
+                              console.log('Investment ID:', normalizedInvestment.investment_id);
+                              if (normalizedInvestment && normalizedInvestment.investment_id) {
+                                setSelectedInvestment(normalizedInvestment as InvestmentRecord);
+                                setSelectedAccount(null); // Clear account when selecting investment
+                              } else {
+                                console.error('Invalid investment selected - missing investment_id:', investment);
+                              }
+                            } catch (error) {
+                              console.error('Error selecting investment:', error);
                             }
                           }}
                         />
@@ -167,6 +201,34 @@ function App() {
                   <Text color="red.500" fontWeight="bold">Error: Account ID is missing</Text>
                   <Text color="red.400" fontSize="sm" mt={2}>
                     Selected account: {JSON.stringify(selectedAccount, null, 2)}
+                  </Text>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {selectedInvestment && (
+            <Box>
+              <Flex justify="space-between" align="center" mb={4}>
+                <Heading size="lg">
+                  {selectedInvestment.name || 'Investment'} - Transactions
+                </Heading>
+                <Button onClick={() => {
+                  console.log('Going back to investments');
+                  setSelectedInvestment(null);
+                }} variant="ghost">
+                  Back to Investments
+                </Button>
+              </Flex>
+              {selectedInvestment.investment_id ? (
+                <ErrorBoundary>
+                  <InvestmentTransactionsList investmentId={selectedInvestment.investment_id} />
+                </ErrorBoundary>
+              ) : (
+                <Box p={4} bg="red.50" borderRadius="md">
+                  <Text color="red.500" fontWeight="bold">Error: Investment ID is missing</Text>
+                  <Text color="red.400" fontSize="sm" mt={2}>
+                    Selected investment: {JSON.stringify(selectedInvestment, null, 2)}
                   </Text>
                 </Box>
               )}
