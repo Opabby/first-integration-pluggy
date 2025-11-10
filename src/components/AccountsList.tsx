@@ -57,11 +57,35 @@ export const AccountsList = ({
 
       try {
         const data = await pluggyApi.getAccountsFromDb(itemId);
-        setAccounts(data);
+        console.log('Accounts API response:', data, 'Type:', typeof data, 'Is Array:', Array.isArray(data));
+        
+        // Ensure data is always an array
+        if (Array.isArray(data)) {
+          setAccounts(data);
+        } else if (data && Array.isArray(data.accounts)) {
+          // Handle case where API returns { accounts: [...] }
+          setAccounts(data.accounts);
+        } else if (data && Array.isArray(data.results)) {
+          // Handle case where API returns { results: [...] }
+          setAccounts(data.results);
+        } else if (data && typeof data === 'object' && data !== null) {
+          // Handle case where API returns a single account object or wrapped response
+          // Check if it's a single account with account_id
+          if (data.account_id) {
+            setAccounts([data]);
+          } else {
+            console.warn('Unexpected accounts data format:', data);
+            setAccounts([]);
+          }
+        } else {
+          console.warn('Unexpected accounts data format:', data);
+          setAccounts([]);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load accounts"
         );
+        setAccounts([]); // Reset to empty array on error
       } finally {
         setIsLoading(false);
       }
@@ -84,6 +108,17 @@ export const AccountsList = ({
     return (
       <Card.Root p={4}>
         <Text color="red.500">{error}</Text>
+      </Card.Root>
+    );
+  }
+
+  // Ensure accounts is always an array before rendering
+  if (!Array.isArray(accounts)) {
+    return (
+      <Card.Root p={4}>
+        <Text color="red.500">
+          Error: Invalid accounts data format. Expected an array.
+        </Text>
       </Card.Root>
     );
   }

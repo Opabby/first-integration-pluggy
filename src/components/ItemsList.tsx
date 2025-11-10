@@ -16,12 +16,16 @@ import { DeleteItemButton } from "./DeleteItemButton";
 interface ItemsListProps {
   userId?: string;
   onItemSelect?: (item: PluggyItemRecord) => void;
+  refreshTrigger?: number;
 }
 
-export const ItemsList = ({ userId, onItemSelect }: ItemsListProps) => {
+export const ItemsList = ({ userId, onItemSelect, refreshTrigger }: ItemsListProps) => {
   const [items, setItems] = useState<PluggyItemRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    fetchItems();
+  }, [refreshTrigger]);
 
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
@@ -132,7 +136,17 @@ export const ItemsList = ({ userId, onItemSelect }: ItemsListProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onItemSelect(item)}
+                    onClick={() => {
+                      try {
+                        if (item && item.item_id) {
+                          onItemSelect(item);
+                        } else {
+                          console.error('Invalid item data:', item);
+                        }
+                      } catch (error) {
+                        console.error('Error selecting item:', error);
+                      }
+                    }}
                   >
                     View Details
                   </Button>
