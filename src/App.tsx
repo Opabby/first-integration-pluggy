@@ -14,6 +14,7 @@ import { ItemsList } from './components/ItemsList';
 import { AccountsList } from './components/AccountsList';
 import { IdentityDisplay } from './components/IdentityDisplay';
 import { TransactionsList } from './components/TransactionsList';
+import { CreditCardBillsList } from './components/CreditCardBillsList';
 import { InvestmentsList } from './components/InvestmentsList';
 import { InvestmentTransactionsList } from './components/InvestmentTransactionsList';
 import { LoansList } from './components/LoansList';
@@ -76,9 +77,7 @@ function App() {
 
           {!selectedItem && !selectedAccount && !selectedInvestment && !selectedLoan && (
             <Box>
-              <Heading size="lg" mb={4}>
-                Connected Accounts
-              </Heading>
+              
               <ItemsList
                 onItemSelect={handleItemSelect}
                 refreshTrigger={refreshTrigger}
@@ -218,7 +217,7 @@ function App() {
             <Box>
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="lg">
-                  {selectedAccount.name || 'Account'} - Transactions
+                  {selectedAccount.name || 'Account'} - {selectedAccount.type === 'CREDIT' ? 'Bills' : 'Transactions'}
                 </Heading>
                 <Button onClick={() => {
                   console.log('Going back to accounts');
@@ -229,7 +228,11 @@ function App() {
               </Flex>
               {selectedAccount.account_id ? (
                 <ErrorBoundary>
-                  <TransactionsList accountId={selectedAccount.account_id} />
+                  {selectedAccount.type === 'CREDIT' ? (
+                    <CreditCardBillsList accountId={selectedAccount.account_id} />
+                  ) : (
+                    <TransactionsList accountId={selectedAccount.account_id} />
+                  )}
                 </ErrorBoundary>
               ) : (
                 <Box p={4} bg="red.50" borderRadius="md">
