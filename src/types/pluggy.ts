@@ -219,3 +219,18 @@ export interface LoanRecord {
   updated_at?: string;
   [key: string]: unknown;
 }
+
+export interface CreditCardBillRecord {
+  bill_id: string;
+  account_id: string;
+  due_date: string;
+  total_amount: number;
+  minimum_payment?: number;
+  currency_code?: string;
+  payment_date?: string;
+  paid_amount?: number;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}

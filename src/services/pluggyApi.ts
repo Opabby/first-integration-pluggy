@@ -7,7 +7,8 @@ import type {
   TransactionRecord,
   InvestmentRecord,
   InvestmentTransactionRecord,
-  LoanRecord
+  LoanRecord,
+  CreditCardBillRecord
 } from "../types/pluggy";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -162,6 +163,13 @@ export const pluggyApi = {
   saveLoans: async (loans: LoanRecord[]): Promise<LoanRecord[]> => {
     const response = await backendApi.post("/api/loans", {
       loans,
+    });
+    return response.data;
+  },
+
+  getCreditCardBillsFromDb: async (accountId: string): Promise<CreditCardBillRecord[]> => {
+    const response = await backendApi.get("/api/bills", {
+      params: { accountId, fromDb: 'true' },
     });
     return response.data;
   },

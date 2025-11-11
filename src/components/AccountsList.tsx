@@ -220,7 +220,7 @@ export const AccountsList = ({
               mt={4}
               onClick={() => onAccountSelect(account)}
             >
-              View Transactions
+              {account.type === "CREDIT" ? "View Details" : "View Transactions"}
             </Button>
           )}
         </Card.Root>
